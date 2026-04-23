@@ -8,7 +8,13 @@ sns.set(style="whitegrid")
 # ======================
 # LOAD DATA
 # ======================
-day_df = pd.read_csv("data_day.csv", parse_dates=["dteday"])
+import os
+import pandas as pd
+
+BASE_DIR = os.path.dirname(__file__)
+data_path = os.path.join(BASE_DIR, "data_day.csv")
+
+day_df = pd.read_csv(data_path, parse_dates=["dteday"])
 
 st.title("Dashboard Analisis Penyewaan Sepeda 🚲")
 
