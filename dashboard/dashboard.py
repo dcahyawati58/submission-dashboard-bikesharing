@@ -8,13 +8,7 @@ sns.set(style="whitegrid")
 # ======================
 # LOAD DATA
 # ======================
-import os
-import pandas as pd
-
-BASE_DIR = os.path.dirname(__file__)
-data_path = os.path.join(BASE_DIR, "data_day.csv")
-
-day_df = pd.read_csv(data_path, parse_dates=["dteday"])
+day_df = pd.read_csv("data_day.csv", parse_dates=["dteday"])
 
 st.title("Dashboard Analisis Penyewaan Sepeda 🚲")
 
@@ -89,11 +83,12 @@ else:
     # ======================
     # TABS
     # ======================
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📊 Overview",
-        "📈 Tren Waktu",
-        "🌦️ Cuaca & Musim",
-        "👥 Pengguna & Lanjutan"
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📊 Overview",
+    "📈 Tren Waktu",
+    "🌦️ Cuaca & Musim",
+    "👥 Pengguna",
+    "🔬 EDA Lanjutan"
     ])
 
     # ======================
@@ -112,6 +107,12 @@ else:
         )
         ax.set_xlabel("Kategori")
         ax.set_ylabel("Jumlah Hari")
+        st.pyplot(fig)
+
+        st.subheader("Distribusi Total Penyewaan Sepeda")
+
+        fig, ax = plt.subplots(figsize=(8,5))
+        sns.histplot(filtered_df['total_rentals'], kde=True, ax=ax)
         st.pyplot(fig)
 
         # Korelasi
@@ -184,7 +185,7 @@ else:
         st.pyplot(fig)
 
     # ======================
-    # TAB 4: USER & LANJUTAN
+    # TAB 4: Pengguna
     # ======================
     with tab4:
         st.subheader("Perbandingan Pengguna")
@@ -220,3 +221,79 @@ else:
             ax=ax
         )
         st.pyplot(fig)
+        
+    # ======================
+    # TAB 5: EDA Lanjutan
+    # ======================
+    with tab5:
+
+        subtab1, subtab2, subtab3, subtab4 = st.tabs([
+            "Distribusi",
+            "Hubungan",
+            "Normalitas",
+            "Kategori"
+        ])
+        
+        with subtab1:
+            st.subheader("Distribusi Variabel Numerik")
+
+            num_cols = ['temp','atemp','humidity','wind_speed','total_rentals']
+
+            fig, axes = plt.subplots(3,2, figsize=(12,10))
+            axes = axes.flatten()
+
+            for i, col in enumerate(num_cols):
+                sns.histplot(filtered_df[col], kde=True, ax=axes[i])
+                axes[i].set_title(f'Distribusi {col}')
+
+            plt.tight_layout()
+            st.pyplot(fig)
+        
+        with subtab2:
+            st.subheader("Heatmap Korelasi")
+
+            corr = filtered_df[['temp','atemp','humidity','wind_speed','casual','registered','total_rentals']].corr()
+
+            fig, ax = plt.subplots(figsize=(8,5))
+            sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
+            st.pyplot(fig)
+
+            st.subheader("Scatter Plot")
+
+            fig, ax = plt.subplots(figsize=(8,5))
+            sns.scatterplot(data=filtered_df, x='temp', y='total_rentals', ax=ax)
+            st.pyplot(fig)
+
+            fig, ax = plt.subplots(figsize=(8,5))
+            sns.scatterplot(data=filtered_df, x='humidity', y='total_rentals', ax=ax)
+            st.pyplot(fig)
+            
+        with subtab3:
+            import scipy.stats as stats
+
+            st.subheader("Q-Q Plot Total Rentals")
+
+            fig, ax = plt.subplots(figsize=(6,6))
+            stats.probplot(filtered_df['total_rentals'], dist="norm", plot=ax)
+            st.pyplot(fig)
+
+            st.subheader("Shapiro-Wilk Test")
+
+            from scipy.stats import shapiro
+            stat, p = shapiro(filtered_df['total_rentals'].sample(500))
+
+            st.write(f"Statistic: {stat}")
+            st.write(f"p-value: {p}")
+            
+        with subtab4:
+            st.subheader("Distribusi Penyewaan Berdasarkan Musim")
+
+            fig, ax = plt.subplots(figsize=(8,5))
+            sns.violinplot(x='season_label', y='total_rentals', data=filtered_df, ax=ax)
+            st.pyplot(fig)
+
+            st.subheader("Distribusi Penyewaan Berdasarkan Cuaca")
+
+            fig, ax = plt.subplots(figsize=(8,5))
+            sns.violinplot(x='weather_label', y='total_rentals', data=filtered_df, ax=ax)
+            st.pyplot(fig)
